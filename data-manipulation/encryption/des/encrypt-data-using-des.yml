@@ -4,6 +4,11 @@ rule:
     namespace: data-manipulation/encryption/des
     author: "@_re_fox"
     scope: basic block
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Defense Evasion::Obfuscated Files or Information::Encryption-Standard Algorithm [E1027.m05]
+      - Cryptography::Encrypt Data::3DES [C0027.004]
     examples:
       - 91a12a4cf437589ba70b1687f5acad19:0x47F5E8
   features:
@@ -23,6 +28,7 @@ rule:
       - bytes: 20 01 02 03 04 05 04 05 06 07 08 09 08 09 0a 0b 0c 0d 0c 0d 0e 0f 10 11 10 11 12 13 14 15 14 15 16 17 18 19 18 19 1a 1b 1c 1d 1c 1d 1e 1f 20 01 = DES Expansion
       - bytes: 10 07 14 15 1d 0c 1c 11 01 0f 17 1a 05 12 1f 0a 02 08 18 0e 20 1b 03 09 13 0d 1e 06 16 0b 04 19 = PBOX
       - and:
+        - description: DES RawProcessBlock
         - number: 0x18
         - number: 0x10
         - number: 0x8
@@ -30,4 +36,3 @@ rule:
         - characteristic: nzxor
         - count(mnemonic(shr)): 8 or more 
         - mnemonic: ror
-        description: DES RawProcessBlock 

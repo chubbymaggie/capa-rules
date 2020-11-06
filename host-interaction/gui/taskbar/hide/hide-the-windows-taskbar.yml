@@ -9,5 +9,4 @@ rule:
   features:
     - and:
       - match: find taskbar
-      - api: user32.ShowWindow
-      - number: 0x0 = SW_HIDE
+      - match: hide graphical window

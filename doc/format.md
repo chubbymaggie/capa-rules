@@ -225,18 +225,18 @@ There are five structural expressions that may be nested:
   - `N or more` - match at least `N` or more of the children
     - `optional` is an alias for `0 or more`, which is useful for documenting related features. See [write-file.yml](/rules/machine-access-control/file-manipulation/write-file.yml) for an example.
 
-To add context to a statement, you can use the two-line syntax `description: DESCRIPTION STRING` shown below.
+To add context to a statement, you can add *one* nested description entry in the form `- description: DESCRIPTION STRING`.
 Check the [description section](#descriptions) for more details.
 
 For example, consider the following rule:
 
 ```
       - and:
+        - description: core of CRC-32 algorithm
         - mnemonic: shr
         - number: 0xEDB88320
         - number: 8
         - characteristic: nzxor
-        description: If one of this features is not found, the rule will not match
       - api: RtlComputeCrc32
 ```
 
@@ -286,6 +286,8 @@ For example, a crypto constant.
 
 The parameter is a number; if prefixed with `0x` then in hex format, otherwise, decimal format.
 
+If the number is only relevant for a particular architecture, then you can use one of the architecture flavors: `number/x32` or `number/x64`.
+
 To help humans understand the meaning of a number, such that the constant `0x40` means `PAGE_EXECUTE_READWRITE`, you may provide a description alongside the definition.
 Use the inline syntax (preferred) by ending the line with ` = DESCRIPTION STRING`.
 Check the [description section](#descriptions) for more details.
@@ -295,6 +297,7 @@ Examples:
     number: 16
     number: 0x10
     number: 0x40 = PAGE_EXECUTE_READWRITE
+    number/x32: 0x20 = number of bits
 
 Note that capa treats all numbers as unsigned values. A negative number is not a valid feature value.
 To match a negative number you may specify its two's complement representation. For example, `0xFFFFFFF0` (`-2`) in a 32-bit file.
@@ -310,8 +313,8 @@ Regexes should be surrounded with `/` characters.
 By default, capa uses case-sensitive matching and assumes leading and trailing wildcards.
 To perform case-insensitive matching append an `i`. To anchor the regex at the start or end of a string, use `^` and/or `$`.
 
-To add context to a string, use the two-line syntax `...description: DESCRIPTION STRING` shown below because the inline syntax is not supported here.
-Check the [description section](#descriptions) for more details.
+To add context to a string, use the two-line syntax `...description: DESCRIPTION STRING` shown below. The inline syntax is not supported here.
+See the [description section](#descriptions) for more details.
 
 Examples:
 
@@ -358,11 +361,18 @@ This should not be a stack offset.
 The parameter is a number; if prefixed with `0x` then in hex format, otherwise, decimal format. Negative offsets are supported.
 An offset can be followed by an optional description.
 
+If the number is only relevant for a particular architecture, then you can use one of the architecture flavors: `number/x32` or `number/x64`.
+
 Examples:
 
-    offset: 0xC
-    offset: 0x14
-    offset: -0x4
+```yaml
+offset: 0xC
+offset: 0x14 = PEB.BeingDebugged
+offset: -0x4
+or:
+  offset/x32: 0x68 = PEB.NtGlobalFlag
+  offset/x64: 0xBC = PEB.NtGlobalFlag
+```
 
 ### mnemonic
 
@@ -388,7 +398,6 @@ capa does not support instruction pattern matching,
 | characteristic                             | scope                 | description |
 |--------------------------------------------|-----------------------|-------------|
 | `characteristic: embedded pe`        | file                  | (XOR encoded) embedded PE files. |
-| `characteristic: switch`             | function              | Function contains a switch or jump table. |
 | `characteristic: loop`               | function              | Function contains a loop. |
 | `characteristic: recursive call`     | function              | Function is recursive. |
 | `characteristic: calls from`         | function              | There are unique calls from this function. Best used like: `count(characteristic(calls from)): 3 or more` |
@@ -469,7 +478,7 @@ These rules can be expressed like:
     count(characteristic(nzxor)): (2, 10)     # match any value in the range 2<=count<=10
 
     count(mnemonic(mov)): 3
-    count(basic block): 4
+    count(basic blocks): 4
 
 `count` supports inline descriptions, except for [strings](#string), via the following syntax:
 
@@ -509,8 +518,11 @@ For example:
 ```
 
 The inline syntax is preferred.
-For [strings](#string), [statements](#features-block) or if the description is long or contains newlines, use the two-line syntax.
+For [strings](#string) or if the description is long or contains newlines, use the two-line syntax.
 It uses the `description` tag in the following way: `description: DESCRIPTION STRING`.
+
+For [statements](#features-block) you can add *one* nested description entry to the statement.
+
 For example:
 
 ```
@@ -520,12 +532,10 @@ For example:
   - number: 0x4550
     description: IMAGE_DOS_SIGNATURE (MZ)
   - and:
+    - description: documentation of this `and` statement
     - offset: 0x50 = IMAGE_NT_HEADERS.OptionalHeader.SizeOfImage
     - offset: 0x34 = IMAGE_NT_HEADERS.OptionalHeader.ImageBase
-    description: 32-bits
   - and:
     - offset: 0x50 = IMAGE_NT_HEADERS64.OptionalHeader.SizeOfImage
     - offset: 0x30 = IMAGE_NT_HEADERS64.OptionalHeader.ImageBase
-    description: 64-bits
-  description: PE file signatures
 ```
